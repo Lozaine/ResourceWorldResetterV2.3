@@ -11,13 +11,11 @@ commands:
     description: "Open the Resource World Reset GUI"
     usage: "/rwrgui"
     permission: "resourceworldresetter.admin"
-    aliases: [resourcegui, rwadmin]
 
   reloadrwr:
     description: "Reload the ResourceWorldResetter plugin"
     usage: "/reloadrwr"
     permission: "resourceworldresetter.admin"
-    aliases: [reloadworldresetter]
 
   resetworld:
     description: "Force reset the resource world"
