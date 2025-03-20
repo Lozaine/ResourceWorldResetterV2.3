@@ -114,18 +114,6 @@ public class ResourceWorldResetter extends JavaPlugin {
                     }
                     return true;
 
-                case "setworld":
-                    if (args.length > 0) {
-                        worldName = args[0];
-                        getConfig().set("worldName", worldName);
-                        saveConfig();
-                        sender.sendMessage(ChatColor.GREEN + "Resource world set to: " + worldName);
-                        ensureResourceWorldExists();
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /setworld <worldname>");
-                    }
-                    return true;
-
                 case "resetworld":
                     sender.sendMessage(ChatColor.GREEN + "Forcing resource world reset...");
                     resetResourceWorld();
@@ -135,42 +123,6 @@ public class ResourceWorldResetter extends JavaPlugin {
                     reloadConfig();
                     loadConfig();
                     sender.sendMessage(ChatColor.GREEN + "ResourcesWorldResetter configuration reloaded!");
-                    return true;
-
-                case "setresetinterval":
-                    if (args.length > 0) {
-                        try {
-                            int hours = Integer.parseInt(args[0]);
-                            if (hours > 0) {
-                                setResetInterval(hours * 3600); // Convert hours to seconds
-                                sender.sendMessage(ChatColor.GREEN + "Reset interval set to " + hours + " hours.");
-                            } else {
-                                sender.sendMessage(ChatColor.RED + "Hours must be greater than 0.");
-                            }
-                        } catch (NumberFormatException e) {
-                            sender.sendMessage(ChatColor.RED + "Please enter a valid number.");
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /setresetinterval <hours>");
-                    }
-                    return true;
-
-                case "setrestarttime":
-                    if (args.length > 0) {
-                        try {
-                            int hour = Integer.parseInt(args[0]);
-                            if (hour >= 0 && hour <= 23) {
-                                setRestartTime(hour);
-                                sender.sendMessage(ChatColor.GREEN + "Restart time set to " + hour + ":00.");
-                            } else {
-                                sender.sendMessage(ChatColor.RED + "Hour must be between 0 and 23.");
-                            }
-                        } catch (NumberFormatException e) {
-                            sender.sendMessage(ChatColor.RED + "Please enter a valid number.");
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /setrestarttime <hour>");
-                    }
                     return true;
             }
         } else {
