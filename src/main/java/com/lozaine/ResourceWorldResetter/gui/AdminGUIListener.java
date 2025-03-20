@@ -57,15 +57,45 @@ public class AdminGUIListener implements Listener {
             case MONTHLY_DAY_MENU:
                 handleMonthlyDayMenuClick(player, itemName);
                 break;
+            case WORLD_SELECTION_MENU:
+                handleWorldSelectionMenuClick(player, itemName);
+                break;
         }
+    }
+
+    // New method to handle world selection
+    private void handleWorldSelectionMenuClick(Player player, String itemName) {
+        if (itemName.equals("Back")) {
+            adminGUI.openMainMenu(player);
+            return;
+        }
+
+        // Extract the world name (remove color codes and (Current) suffix if present)
+        String worldName = itemName;
+        if (worldName.contains(" (Current)")) {
+            worldName = worldName.substring(0, worldName.indexOf(" (Current)"));
+        }
+
+        // Update the world name in plugin config
+        setWorldInPlugin(player, worldName);
+    }
+
+    // Helper method to update the world name in plugin
+    private void setWorldInPlugin(Player player, String worldName) {
+        // Check if we should be updating this manually or if there's a method in plugin
+        // Since there's no setWorldName in the plugin class, we'll update the config directly
+        plugin.getConfig().set("worldName", worldName);
+        plugin.saveConfig();
+        plugin.loadConfig(); // Reload the config to apply changes
+
+        player.sendMessage(ChatColor.GREEN + "Resource world set to: " + worldName);
+        adminGUI.openMainMenu(player);
     }
 
     private void handleMainMenuClick(Player player, String itemName) {
         switch (itemName) {
             case "Change World":
-                player.closeInventory();
-                player.sendMessage(ChatColor.YELLOW + "Type the world name in chat:");
-                // Could implement chat listener for world name input
+                adminGUI.openWorldSelectionMenu(player);
                 break;
             case "Reset Type":
                 adminGUI.openResetTypeMenu(player);
@@ -87,10 +117,12 @@ public class AdminGUIListener implements Listener {
             case "Reload Config":
                 player.closeInventory();
                 plugin.reloadConfig();
+                plugin.loadConfig();
                 player.sendMessage(ChatColor.GREEN + "Configuration reloaded!");
                 break;
         }
     }
+
     private void handleWarningTimeMenuClick(Player player, String itemName) {
         if (itemName.equals("Back")) {
             adminGUI.openMainMenu(player);
@@ -113,6 +145,7 @@ public class AdminGUIListener implements Listener {
         }
         adminGUI.openMainMenu(player);
     }
+
     private void handleRestartTimeMenuClick(Player player, String itemName) {
         if (itemName.equals("Back")) {
             adminGUI.openMainMenu(player);
@@ -145,7 +178,7 @@ public class AdminGUIListener implements Listener {
             case "Monthly Reset":
                 plugin.setResetType("monthly");
                 player.sendMessage(ChatColor.GREEN + "Reset type set to monthly!");
-                adminGUI.openResetDayMenu(player);
+                adminGUI.openMonthlyDayMenu(player);
                 break;
             case "Back":
                 adminGUI.openMainMenu(player);
@@ -154,15 +187,18 @@ public class AdminGUIListener implements Listener {
     }
 
     private void handleResetIntervalMenuClick(Player player, String itemName) {
+        if (itemName.equals("Back")) {
+            adminGUI.openMainMenu(player);
+            return;
+        }
+
         int interval = switch (itemName) {
             case "1 Hour" -> 3600;
             case "2 Hours" -> 7200;
-            case "3 Hours" -> 10800;
             case "4 Hours" -> 14400;
             case "6 Hours" -> 21600;
             case "8 Hours" -> 28800;
             case "12 Hours" -> 43200;
-            case "Disable Hourly" -> 86400;
             default -> -1;
         };
 
@@ -172,6 +208,7 @@ public class AdminGUIListener implements Listener {
         }
         adminGUI.openMainMenu(player);
     }
+
     private void handleMonthlyDayMenuClick(Player player, String itemName) {
         if (itemName.equals("Back")) {
             adminGUI.openMainMenu(player);
@@ -197,30 +234,22 @@ public class AdminGUIListener implements Listener {
             return;
         }
 
-        if (plugin.getResetType().equalsIgnoreCase("weekly")) {
-            int day = switch (itemName) {
-                case "Monday" -> 1;
-                case "Tuesday" -> 2;
-                case "Wednesday" -> 3;
-                case "Thursday" -> 4;
-                case "Friday" -> 5;
-                case "Saturday" -> 6;
-                case "Sunday" -> 7;
-                default -> -1;
-            };
-            if (day != -1) {
-                plugin.setResetDay(day);
-                player.sendMessage(ChatColor.GREEN + "Weekly reset day set to " + itemName + "!");
-            }
-        } else if (plugin.getResetType().equalsIgnoreCase("monthly")) {
-            try {
-                int day = Integer.parseInt(itemName.replaceAll("[^0-9]", ""));
-                if (day >= 1 && day <= 31) {
-                    plugin.setResetDay(day);
-                    player.sendMessage(ChatColor.GREEN + "Monthly reset day set to day " + day + "!");
-                }
-            } catch (NumberFormatException ignored) {}
+        int day = switch (itemName) {
+            case "Monday" -> 1;
+            case "Tuesday" -> 2;
+            case "Wednesday" -> 3;
+            case "Thursday" -> 4;
+            case "Friday" -> 5;
+            case "Saturday" -> 6;
+            case "Sunday" -> 7;
+            default -> -1;
+        };
+
+        if (day != -1) {
+            plugin.setResetDay(day);
+            player.sendMessage(ChatColor.GREEN + "Weekly reset day set to " + itemName + "!");
         }
+
         adminGUI.openMainMenu(player);
     }
 
