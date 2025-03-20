@@ -1,26 +1,23 @@
 package com.lozaine.ResourceWorldResetter.gui;
 
-import com.onarandombox.MultiverseCore.display.ColorAlternator;
+import com.lozaine.ResourceWorldResetter.ResourceWorldResetter;
+import com.onarandombox.MultiverseCore.MultiverseCore;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import com.lozaine.ResourceWorldResetter.ResourceWorldResetter;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class AdminGUI implements Listener {
     private final ResourceWorldResetter plugin;
     private final Map<UUID, GuiType> activeGuis = new HashMap<>();
+    private final MultiverseCore mvCore;
 
     public enum GuiType {
         MAIN_MENU,
@@ -29,11 +26,13 @@ public class AdminGUI implements Listener {
         RESET_DAY_MENU,
         WARNING_TIME_MENU,
         RESTART_TIME_MENU,
-        MONTHLY_DAY_MENU
+        MONTHLY_DAY_MENU,
+        WORLD_SELECTION_MENU
     }
 
     public AdminGUI(ResourceWorldResetter plugin) {
         this.plugin = plugin;
+        this.mvCore = (MultiverseCore) Bukkit.getPluginManager().getPlugin("Multiverse-Core");
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -53,7 +52,7 @@ public class AdminGUI implements Listener {
                 "Warning Time: " + ChatColor.RED + plugin.getResetWarningTime() + " minutes"));
 
         // Main options with improved icons and descriptions
-        gui.setItem(10, createGuiItem(Material.GRASS_BLOCK, "Change World", "Set which world to reset"));
+        gui.setItem(10, createGuiItem(Material.GRASS_BLOCK, "Change World", "Select which world to reset"));
         gui.setItem(12, createGuiItem(Material.CLOCK, "Reset Type", "Daily, weekly, or monthly"));
         gui.setItem(14, createGuiItem(Material.HOPPER, "Reset Interval", "For hourly resets"));
         gui.setItem(16, createGuiItem(Material.SUNFLOWER, "Restart Time", "Hour of daily reset"));
@@ -66,6 +65,73 @@ public class AdminGUI implements Listener {
         activeGuis.put(player.getUniqueId(), GuiType.MAIN_MENU);
     }
 
+    // New method to open world selection menu
+    public void openWorldSelectionMenu(Player player) {
+        Inventory gui = Bukkit.createInventory(player, 54, ChatColor.DARK_AQUA + "Select Resource World");
+
+        int slot = 0;
+
+        // Get all worlds from Multiverse
+        if (mvCore != null) {
+            Collection<World> worlds = mvCore.getMVWorldManager().getMVWorlds();
+            for (World world : worlds) {
+                Material icon = Material.GRASS_BLOCK;
+                String description = "Normal world";
+
+                // Choose appropriate icon based on world type
+                if (world.getEnvironment() == World.Environment.NETHER) {
+                    icon = Material.NETHERRACK;
+                    description = "Nether world";
+                } else if (world.getEnvironment() == World.Environment.THE_END) {
+                    icon = Material.END_STONE;
+                    description = "End world";
+                }
+
+                // If this is the current resource world, highlight it
+                String worldName = world.getName();
+                String displayName = worldName;
+                if (worldName.equals(plugin.getWorldName())) {
+                    displayName = ChatColor.GREEN + worldName + ChatColor.WHITE + " (Current)";
+                }
+
+                gui.setItem(slot++, createGuiItem(icon, displayName, description));
+
+                // Ensure we don't exceed inventory size
+                if (slot >= 45) break;
+            }
+        } else {
+            // Fallback if Multiverse isn't available
+            for (World world : Bukkit.getWorlds()) {
+                Material icon = Material.GRASS_BLOCK;
+                String description = "Normal world";
+
+                if (world.getEnvironment() == World.Environment.NETHER) {
+                    icon = Material.NETHERRACK;
+                    description = "Nether world";
+                } else if (world.getEnvironment() == World.Environment.THE_END) {
+                    icon = Material.END_STONE;
+                    description = "End world";
+                }
+
+                String worldName = world.getName();
+                String displayName = worldName;
+                if (worldName.equals(plugin.getWorldName())) {
+                    displayName = ChatColor.GREEN + worldName + ChatColor.WHITE + " (Current)";
+                }
+
+                gui.setItem(slot++, createGuiItem(icon, displayName, description));
+
+                if (slot >= 45) break;
+            }
+        }
+
+        // Back button
+        gui.setItem(49, createGuiItem(Material.BARRIER, "Back", "Return to main menu"));
+
+        player.openInventory(gui);
+        activeGuis.put(player.getUniqueId(), GuiType.WORLD_SELECTION_MENU);
+    }
+
     // Helper method to capitalize first letter
     private String capitalizeFirstLetter(String text) {
         if (text == null || text.isEmpty()) {
@@ -74,48 +140,28 @@ public class AdminGUI implements Listener {
         return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
     }
 
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!activeGuis.containsKey(player.getUniqueId())) return;
-
-        event.setCancelled(true);
-
-        ItemStack clickedItem = event.getCurrentItem();
-        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-
-        ItemMeta meta = clickedItem.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) return;
-
-        String itemName = ChatColor.stripColor(meta.getDisplayName());
-
-        switch (itemName) {
-            case "Change World" -> {
-                player.closeInventory();
-                player.sendMessage(ChatColor.YELLOW + "Use /setworld <worldname> to set the resource world.");
+    private ItemStack createGuiItem(Material material, String name, String... lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.WHITE + name);
+            if (lore.length > 0) {
+                meta.setLore(Arrays.asList(lore));
             }
-            case "Reset Type" -> openResetTypeMenu(player);
-            case "Reset Interval" -> openResetIntervalMenu(player);
-            case "Restart Time" -> {
-                player.closeInventory();
-                player.sendMessage(ChatColor.YELLOW + "Use /setrestarttime <hour> to set the reset time.");
-            }
-            case "Warning Time" -> {
-                player.closeInventory();
-                player.sendMessage(ChatColor.YELLOW + "Use /setwarningtime <minutes> to set the warning time.");
-            }
-            case "Force Reset" -> {
-                player.closeInventory();
-                plugin.resetResourceWorld();
-                player.sendMessage(ChatColor.GREEN + "World reset initiated!");
-            }
-            case "Reload Config" -> {
-                player.closeInventory();
-                plugin.reloadConfig();
-                player.sendMessage(ChatColor.GREEN + "Configuration reloaded!");
-            }
-            case "Back" -> openMainMenu(player);
+            item.setItemMeta(meta);
         }
+        return item;
+    }
+
+    private ItemStack createInfoItem(Material material, String name, String... lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.GOLD + name);
+            meta.setLore(Arrays.asList(Arrays.stream(lore).map(s -> ChatColor.GRAY + s).toArray(String[]::new)));
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     public void openResetTypeMenu(Player player) {
@@ -134,11 +180,13 @@ public class AdminGUI implements Listener {
     public void openResetIntervalMenu(Player player) {
         Inventory gui = Bukkit.createInventory(player, 9, ChatColor.DARK_AQUA + "Select Reset Interval");
 
-        gui.setItem(2, createGuiItem(Material.CLOCK, "1 Hour", "Reset every 1 hour"));
-        gui.setItem(3, createGuiItem(Material.CLOCK, "2 Hours", "Reset every 2 hours"));
-        gui.setItem(4, createGuiItem(Material.CLOCK, "4 Hours", "Reset every 4 hours"));
-        gui.setItem(5, createGuiItem(Material.CLOCK, "6 Hours", "Reset every 6 hours"));
-        gui.setItem(6, createGuiItem(Material.BARRIER, "Back", "Return to main menu"));
+        gui.setItem(1, createGuiItem(Material.CLOCK, "1 Hour", "Reset every 1 hour"));
+        gui.setItem(2, createGuiItem(Material.CLOCK, "2 Hours", "Reset every 2 hours"));
+        gui.setItem(3, createGuiItem(Material.CLOCK, "4 Hours", "Reset every 4 hours"));
+        gui.setItem(4, createGuiItem(Material.CLOCK, "6 Hours", "Reset every 6 hours"));
+        gui.setItem(5, createGuiItem(Material.CLOCK, "8 Hours", "Reset every 8 hours"));
+        gui.setItem(6, createGuiItem(Material.CLOCK, "12 Hours", "Reset every 12 hours"));
+        gui.setItem(8, createGuiItem(Material.BARRIER, "Back", "Return to main menu"));
 
         player.openInventory(gui);
         activeGuis.put(player.getUniqueId(), GuiType.RESET_INTERVAL_MENU);
@@ -147,35 +195,14 @@ public class AdminGUI implements Listener {
     public void openResetDayMenu(Player player) {
         Inventory gui = Bukkit.createInventory(player, 9, ChatColor.DARK_AQUA + "Select Reset Day");
 
+        String[] dayNames = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
         for (int i = 0; i < 7; i++) {
-            gui.setItem(i, createGuiItem(Material.PAPER, new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}[i]));
+            gui.setItem(i, createGuiItem(Material.PAPER, dayNames[i], "Reset every " + dayNames[i]));
         }
         gui.setItem(8, createGuiItem(Material.BARRIER, "Back", "Return to main menu"));
 
         player.openInventory(gui);
         activeGuis.put(player.getUniqueId(), GuiType.RESET_DAY_MENU);
-    }
-
-    private ItemStack createGuiItem(Material material, String name, String... lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(ChatColor.WHITE + name);
-            meta.setLore(Arrays.asList(lore));
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-
-    private ItemStack createInfoItem(Material material, String name, String... lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + name);
-            meta.setLore(Arrays.asList(Arrays.stream(lore).map(s -> ChatColor.GRAY + s).toArray(String[]::new)));
-            item.setItemMeta(meta);
-        }
-        return item;
     }
 
     public void openWarningTimeMenu(Player player) {
@@ -194,6 +221,7 @@ public class AdminGUI implements Listener {
         player.openInventory(gui);
         activeGuis.put(player.getUniqueId(), GuiType.WARNING_TIME_MENU);
     }
+
     public void openRestartTimeMenu(Player player) {
         Inventory gui = Bukkit.createInventory(player, 27, ChatColor.DARK_AQUA + "Select Restart Hour");
 
@@ -213,7 +241,7 @@ public class AdminGUI implements Listener {
         activeGuis.put(player.getUniqueId(), GuiType.RESTART_TIME_MENU);
     }
 
-    // 4. Add monthly day selection menu
+    // Open monthly day selection menu
     public void openMonthlyDayMenu(Player player) {
         Inventory gui = Bukkit.createInventory(player, 36, ChatColor.DARK_AQUA + "Select Monthly Reset Day");
 
