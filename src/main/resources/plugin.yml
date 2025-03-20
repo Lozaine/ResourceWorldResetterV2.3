@@ -7,6 +7,12 @@ author: Lozaine
 description: A plugin to reset the resources world at regular intervals.
 
 commands:
+  resourcegui:
+    description: "Open the Resource World Admin GUI"
+    usage: "/resourcegui"
+    permission: "resourceworldresetter.admin"
+    aliases: [rwadmin]
+
   setworld:
     description: "Set the resource world name"
     usage: "/setworld <worldname>"
@@ -31,9 +37,3 @@ commands:
     description: "Reload the ResourceWorldResetter plugin"
     usage: "/reloadworldresetter"
     permission: "resourceworldresetter.admin"
-
-  resourcegui:
-    description: "Open the Resource World Admin GUI"
-    usage: "/resourcegui"
-    permission: "resourceworldresetter.admin"
-
