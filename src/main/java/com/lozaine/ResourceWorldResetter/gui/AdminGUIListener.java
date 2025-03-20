@@ -48,6 +48,15 @@ public class AdminGUIListener implements Listener {
             case RESET_DAY_MENU:
                 handleResetDayMenuClick(player, itemName);
                 break;
+            case WARNING_TIME_MENU:
+                handleWarningTimeMenuClick(player, itemName);
+                break;
+            case RESTART_TIME_MENU:
+                handleRestartTimeMenuClick(player, itemName);
+                break;
+            case MONTHLY_DAY_MENU:
+                handleMonthlyDayMenuClick(player, itemName);
+                break;
         }
     }
 
@@ -55,7 +64,8 @@ public class AdminGUIListener implements Listener {
         switch (itemName) {
             case "Change World":
                 player.closeInventory();
-                player.sendMessage(ChatColor.YELLOW + "Enter the world name in chat:");
+                player.sendMessage(ChatColor.YELLOW + "Type the world name in chat:");
+                // Could implement chat listener for world name input
                 break;
             case "Reset Type":
                 adminGUI.openResetTypeMenu(player);
@@ -64,12 +74,10 @@ public class AdminGUIListener implements Listener {
                 adminGUI.openResetIntervalMenu(player);
                 break;
             case "Restart Time":
-                player.closeInventory();
-                player.sendMessage(ChatColor.YELLOW + "Enter the reset hour (0-23) in chat:");
+                adminGUI.openRestartTimeMenu(player);
                 break;
             case "Warning Time":
-                player.closeInventory();
-                player.sendMessage(ChatColor.YELLOW + "Enter the warning time in minutes:");
+                adminGUI.openWarningTimeMenu(player);
                 break;
             case "Force Reset":
                 player.closeInventory();
@@ -82,6 +90,44 @@ public class AdminGUIListener implements Listener {
                 player.sendMessage(ChatColor.GREEN + "Configuration reloaded!");
                 break;
         }
+    }
+    private void handleWarningTimeMenuClick(Player player, String itemName) {
+        if (itemName.equals("Back")) {
+            adminGUI.openMainMenu(player);
+            return;
+        }
+
+        int minutes = switch (itemName) {
+            case "No Warning" -> 0;
+            case "1 Minute" -> 1;
+            case "5 Minutes" -> 5;
+            case "10 Minutes" -> 10;
+            case "15 Minutes" -> 15;
+            case "30 Minutes" -> 30;
+            default -> -1;
+        };
+
+        if (minutes != -1) {
+            plugin.setResetWarningTime(minutes);
+            player.sendMessage(ChatColor.GREEN + "Warning time set to " + minutes + " minutes!");
+        }
+        adminGUI.openMainMenu(player);
+    }
+    private void handleRestartTimeMenuClick(Player player, String itemName) {
+        if (itemName.equals("Back")) {
+            adminGUI.openMainMenu(player);
+            return;
+        }
+
+        try {
+            int hour = Integer.parseInt(itemName.split(":")[0]);
+            if (hour >= 0 && hour <= 23) {
+                plugin.setRestartTime(hour);
+                player.sendMessage(ChatColor.GREEN + "Restart time set to " + hour + ":00!");
+            }
+        } catch (NumberFormatException ignored) {}
+
+        adminGUI.openMainMenu(player);
     }
 
     private void handleResetTypeMenuClick(Player player, String itemName) {
@@ -124,6 +170,24 @@ public class AdminGUIListener implements Listener {
             plugin.setResetInterval(interval);
             player.sendMessage(ChatColor.GREEN + "Reset interval set to " + (interval / 3600) + " hours!");
         }
+        adminGUI.openMainMenu(player);
+    }
+    private void handleMonthlyDayMenuClick(Player player, String itemName) {
+        if (itemName.equals("Back")) {
+            adminGUI.openMainMenu(player);
+            return;
+        }
+
+        if (itemName.startsWith("Day ")) {
+            try {
+                int day = Integer.parseInt(itemName.substring(4));
+                if (day >= 1 && day <= 31) {
+                    plugin.setResetDay(day);
+                    player.sendMessage(ChatColor.GREEN + "Monthly reset day set to day " + day + "!");
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
         adminGUI.openMainMenu(player);
     }
 
