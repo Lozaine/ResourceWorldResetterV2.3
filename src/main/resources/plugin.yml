@@ -1,7 +1,7 @@
 name: ResourcesWorldResetter
 version: '2.3.0-UNRELEASED'
 main: com.lozaine.ResourceWorldResetter.ResourceWorldResetter
-api-version: '1.21'  # Updated to 1.21
+api-version: '1.21'
 depend: [Multiverse-Core]
 author: Lozaine
 description: A plugin to reset the resources world at regular intervals.
@@ -12,21 +12,6 @@ commands:
     usage: "/resourcegui"
     permission: "resourceworldresetter.admin"
     aliases: [rwadmin]
-
-  setworld:
-    description: "Set the resource world name"
-    usage: "/setworld <worldname>"
-    permission: "resourceworldresetter.admin"
-
-  setresetinterval:
-    description: "Set the reset interval in hours"
-    usage: "/setresetinterval <hours>"
-    permission: "resourceworldresetter.admin"
-
-  setrestarttime:
-    description: "Set the server restart time"
-    usage: "/setrestarttime <hour>"
-    permission: "resourceworldresetter.admin"
 
   resetworld:
     description: "Force reset the resource world"
