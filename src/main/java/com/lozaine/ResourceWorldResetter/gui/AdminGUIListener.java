@@ -42,9 +42,6 @@ public class AdminGUIListener implements Listener {
             case RESET_TYPE_MENU:
                 handleResetTypeMenuClick(player, itemName);
                 break;
-            case RESET_INTERVAL_MENU:
-                handleResetIntervalMenuClick(player, itemName);
-                break;
             case RESET_DAY_MENU:
                 handleResetDayMenuClick(player, itemName);
                 break;
@@ -77,17 +74,7 @@ public class AdminGUIListener implements Listener {
         }
 
         // Update the world name in plugin config
-        setWorldInPlugin(player, worldName);
-    }
-
-    // Helper method to update the world name in plugin
-    private void setWorldInPlugin(Player player, String worldName) {
-        // Check if we should be updating this manually or if there's a method in plugin
-        // Since there's no setWorldName in the plugin class, we'll update the config directly
-        plugin.getConfig().set("worldName", worldName);
-        plugin.saveConfig();
-        plugin.loadConfig(); // Reload the config to apply changes
-
+        plugin.setWorldName(worldName);
         player.sendMessage(ChatColor.GREEN + "Resource world set to: " + worldName);
         adminGUI.openMainMenu(player);
     }
@@ -99,9 +86,6 @@ public class AdminGUIListener implements Listener {
                 break;
             case "Reset Type":
                 adminGUI.openResetTypeMenu(player);
-                break;
-            case "Reset Interval":
-                adminGUI.openResetIntervalMenu(player);
                 break;
             case "Restart Time":
                 adminGUI.openRestartTimeMenu(player);
@@ -184,29 +168,6 @@ public class AdminGUIListener implements Listener {
                 adminGUI.openMainMenu(player);
                 break;
         }
-    }
-
-    private void handleResetIntervalMenuClick(Player player, String itemName) {
-        if (itemName.equals("Back")) {
-            adminGUI.openMainMenu(player);
-            return;
-        }
-
-        int interval = switch (itemName) {
-            case "1 Hour" -> 3600;
-            case "2 Hours" -> 7200;
-            case "4 Hours" -> 14400;
-            case "6 Hours" -> 21600;
-            case "8 Hours" -> 28800;
-            case "12 Hours" -> 43200;
-            default -> -1;
-        };
-
-        if (interval != -1) {
-            plugin.setResetInterval(interval);
-            player.sendMessage(ChatColor.GREEN + "Reset interval set to " + (interval / 3600) + " hours!");
-        }
-        adminGUI.openMainMenu(player);
     }
 
     private void handleMonthlyDayMenuClick(Player player, String itemName) {
