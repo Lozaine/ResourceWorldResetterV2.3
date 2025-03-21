@@ -1,6 +1,5 @@
 worldName: "Resources"    # Default world name set to "Resources"
 resetWarningTime: 5       # Time (in minutes) to warn players before reset
-resetInterval: 86400      # Time (in seconds) between resets (for hourly resets)
 restartTime: 3            # Hour of day when reset happens (24-hour format)
 
 # Reset type: "daily", "weekly", or "monthly"
