@@ -2,6 +2,7 @@ package com.lozaine.ResourceWorldResetter.gui;
 
 import com.lozaine.ResourceWorldResetter.ResourceWorldResetter;
 import com.onarandombox.MultiverseCore.MultiverseCore;
+import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -70,31 +71,34 @@ public class AdminGUI implements Listener {
 
         // Get all worlds from Multiverse
         if (mvCore != null) {
-            Collection<World> worlds = mvCore.getMVWorldManager().getMVWorlds();
-            for (World world : worlds) {
-                Material icon = Material.GRASS_BLOCK;
-                String description = "Normal world";
+            Collection<MultiverseWorld> mvWorlds = mvCore.getMVWorldManager().getMVWorlds();
+            for (MultiverseWorld mvWorld : mvWorlds) {
+                World world = mvWorld.getCBWorld();
+                if (world != null) {
+                    Material icon = Material.GRASS_BLOCK;
+                    String description = "Normal world";
 
-                // Choose appropriate icon based on world type
-                if (world.getEnvironment() == World.Environment.NETHER) {
-                    icon = Material.NETHERRACK;
-                    description = "Nether world";
-                } else if (world.getEnvironment() == World.Environment.THE_END) {
-                    icon = Material.END_STONE;
-                    description = "End world";
+                    // Choose appropriate icon based on world type
+                    if (world.getEnvironment() == World.Environment.NETHER) {
+                        icon = Material.NETHERRACK;
+                        description = "Nether world";
+                    } else if (world.getEnvironment() == World.Environment.THE_END) {
+                        icon = Material.END_STONE;
+                        description = "End world";
+                    }
+
+                    // If this is the current resource world, highlight it
+                    String worldName = world.getName();
+                    String displayName = worldName;
+                    if (worldName.equals(plugin.getWorldName())) {
+                        displayName = ChatColor.GREEN + worldName + ChatColor.WHITE + " (Current)";
+                    }
+
+                    gui.setItem(slot++, createGuiItem(icon, displayName, description));
+
+                    // Ensure we don't exceed inventory size
+                    if (slot >= 45) break;
                 }
-
-                // If this is the current resource world, highlight it
-                String worldName = world.getName();
-                String displayName = worldName;
-                if (worldName.equals(plugin.getWorldName())) {
-                    displayName = ChatColor.GREEN + worldName + ChatColor.WHITE + " (Current)";
-                }
-
-                gui.setItem(slot++, createGuiItem(icon, displayName, description));
-
-                // Ensure we don't exceed inventory size
-                if (slot >= 45) break;
             }
         } else {
             // Fallback if Multiverse isn't available
